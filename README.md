@@ -38,6 +38,12 @@ Agents never import each other; they only exchange `AgentMessage` objects (`back
 `POST /telemetry/generate` · `POST /diagnosis/simulate {scenario, seed}` · `POST /diagnosis/run {snapshot}` ·
 `GET /diagnosis/history` · `GET /diagnosis/{incident_id}`
 
+The local API allows the frontend origins `localhost` and `127.0.0.1` on ports
+3000 and 5173. Set `CORS_ORIGINS` in `.env` to a comma-separated list of exact
+origins when the frontend runs elsewhere. Request validation errors return a
+422 response with a string `detail`, a machine-readable `code`, and sanitized
+field errors (submitted values are not echoed).
+
 ## Honest limitations
 - Evidence scores are heuristic rankings, not calibrated probabilities.
 - Thresholds/rules are hand-chosen; mild faults can fall below them and be reported as "normal".

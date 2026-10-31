@@ -31,7 +31,20 @@ INCIDENT_THRESHOLD = float(os.getenv("INCIDENT_THRESHOLD", 0.45))
 CONTEST_MARGIN = float(os.getenv("CONTEST_MARGIN", 0.10))
 
 # --- API -----------------------------------------------------------------
-CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")]
+DEFAULT_CORS_ORIGINS = (
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+)
+CORS_ORIGINS = [
+    origin
+    for origin in (
+        value.strip()
+        for value in os.getenv("CORS_ORIGINS", ",".join(DEFAULT_CORS_ORIGINS)).split(",")
+    )
+    if origin
+]
 HISTORY_SIZE = int(os.getenv("HISTORY_SIZE", 200))
 
 # --- optional Gemini summary (reporting agent) -----------------------------

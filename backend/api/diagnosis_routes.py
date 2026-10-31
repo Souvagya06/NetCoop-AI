@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from data_generator.scenarios import SCENARIOS
 from protocols.telemetry_schema import TelemetrySnapshot
@@ -11,8 +11,10 @@ router = APIRouter(prefix="/diagnosis", tags=["diagnosis"])
 
 
 class SimulateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     scenario: str = "cpu_overload"
-    seed: Optional[int] = None
+    seed: Optional[int] = Field(default=None, ge=0, strict=True)
 
 
 @router.post("/run")
