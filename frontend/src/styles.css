@@ -381,3 +381,128 @@ td .status-pill { font-size: 8px; padding: 4px 7px; }
   .page-footer { align-items: flex-start; flex-direction: column; gap: 7px; line-height: 1.5; }
   .run-toast { bottom: 12px; font-size: 9px; left: 66px; right: 12px; }
 }
+
+
+/* Live Telemetry Monitoring & Device Inspector Enhancements */
+.live-telemetry-badge {
+  align-items: center;
+  background: #e7f5f1;
+  border: 1px solid #c9ebd8;
+  border-radius: 20px;
+  color: #12745d;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 700;
+  gap: 7px;
+  letter-spacing: .5px;
+  padding: 5px 11px;
+}
+.live-pulse-dot {
+  background: #1cb57b;
+  border-radius: 50%;
+  display: inline-block;
+  height: 7px;
+  width: 7px;
+  animation: pulse 1.6s infinite;
+}
+.device-inspector {
+  background: #f8fbfa;
+  border: 1px solid #d8e6e3;
+  border-radius: 9px;
+  margin-top: 16px;
+  padding: 15px 18px;
+}
+.inspector-topline {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.inspector-title {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+.inspector-title h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+.inspector-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+.inspector-metric-card {
+  background: #fff;
+  border: 1px solid #e7ecea;
+  border-radius: 7px;
+  padding: 9px 11px;
+}
+.inspector-metric-card span {
+  color: var(--muted);
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+}
+.inspector-metric-card strong {
+  color: #1a292c;
+  display: block;
+  font-size: 14px;
+  margin-top: 2px;
+}
+.telemetry-card {
+  margin-top: 24px;
+}
+.telemetry-table-filters {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 13px;
+  flex-wrap: wrap;
+}
+.filter-chip {
+  background: #fff;
+  border: 1px solid #dce4e2;
+  border-radius: 20px;
+  color: #556668;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  transition: .15s ease;
+}
+.filter-chip:hover {
+  background: #f0f6f4;
+  color: var(--teal);
+}
+.filter-chip.active {
+  background: #14796d;
+  border-color: #14796d;
+  color: #fff;
+}
+.device-row-clickable {
+  cursor: pointer;
+}
+.device-row-clickable:hover {
+  background: #f4faf8 !important;
+}
+.mini-gauge {
+  background: #e9edec;
+  border-radius: 4px;
+  display: inline-block;
+  height: 6px;
+  margin-left: 6px;
+  overflow: hidden;
+  vertical-align: middle;
+  width: 50px;
+}
+.mini-gauge-bar {
+  border-radius: 4px;
+  display: block;
+  height: 100%;
+}
+.node-selected {
+  stroke: #14796d !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 5px rgba(20, 121, 109, .4));
+}

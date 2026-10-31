@@ -1,4 +1,9 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api").replace(/\/$/, "");
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== "undefined" && window.location.port === "5173"
+    ? "http://127.0.0.1:8000/api"
+    : "/api")
+).replace(/\/$/, "");
 
 async function request(path, options = {}) {
   let response;
@@ -35,6 +40,7 @@ export const api = {
   topology: () => request("/topology"),
   agents: () => request("/agents"),
   history: () => request("/diagnosis/history"),
+  liveTelemetry: () => request("/telemetry/live"),
   simulate: (scenario, seed) =>
     request("/diagnosis/simulate", {
       method: "POST",

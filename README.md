@@ -12,9 +12,10 @@ cp .env.example .env                                      # optional
 
 python scripts/generate_dataset.py                        # data + trains both Isolation Forests
 cd backend
-pytest -q                                                 # 47 tests
+pytest -q                                                 # 52 tests
 python ml_models/evaluation/evaluate.py                   # held-out evaluation
-uvicorn main:app --reload                                 # API at http://127.0.0.1:8000/docs
+uvicorn main:app --reload                                 # Web Dashboard & API at http://127.0.0.1:8000
+# or directly: python main.py
 ```
 
 Try one diagnosis without the server: `python scripts/run_diagnosis.py --scenario hardware_failure --seed 5`
