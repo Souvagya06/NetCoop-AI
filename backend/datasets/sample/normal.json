@@ -1,0 +1,353 @@
+{
+  "snapshot_id": "sample-normal",
+  "timestamp": "2026-10-31T09:01:25.591985Z",
+  "devices": [
+    {
+      "device_id": "RTR_CAMPUS_01",
+      "device_type": "router",
+      "metrics": {
+        "cpu_utilization_pct": 30.01,
+        "memory_utilization_pct": 47.39,
+        "link_utilization_pct": 41.71,
+        "latency_ms": 5.86,
+        "jitter_ms": 1.38,
+        "packet_loss_pct": 0.0,
+        "queue_drops": 4.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.04,
+        "dhcp_success_pct": 99.58,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "RTR_CAMPUS_02",
+      "device_type": "router",
+      "metrics": {
+        "cpu_utilization_pct": 19.25,
+        "memory_utilization_pct": 41.34,
+        "link_utilization_pct": 22.19,
+        "latency_ms": 5.09,
+        "jitter_ms": 0.29,
+        "packet_loss_pct": 0.11,
+        "queue_drops": 0.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.49,
+        "dhcp_success_pct": 98.09,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "RTR_CAMPUS_03",
+      "device_type": "router",
+      "metrics": {
+        "cpu_utilization_pct": 29.61,
+        "memory_utilization_pct": 45.91,
+        "link_utilization_pct": 26.64,
+        "latency_ms": 6.77,
+        "jitter_ms": 0.83,
+        "packet_loss_pct": 0.08,
+        "queue_drops": 1.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 99.53,
+        "dhcp_success_pct": 99.67,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SW_CAMPUS_01",
+      "device_type": "switch",
+      "metrics": {
+        "cpu_utilization_pct": 15.2,
+        "memory_utilization_pct": 40.61,
+        "link_utilization_pct": 56.31,
+        "latency_ms": 3.49,
+        "jitter_ms": 3.65,
+        "packet_loss_pct": 0.14,
+        "queue_drops": 2.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.95,
+        "dhcp_success_pct": 99.49,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SW_CAMPUS_02",
+      "device_type": "switch",
+      "metrics": {
+        "cpu_utilization_pct": 24.47,
+        "memory_utilization_pct": 45.34,
+        "link_utilization_pct": 57.26,
+        "latency_ms": 4.74,
+        "jitter_ms": 2.33,
+        "packet_loss_pct": 0.02,
+        "queue_drops": 2.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 100.0,
+        "dhcp_success_pct": 98.81,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SW_CAMPUS_03",
+      "device_type": "switch",
+      "metrics": {
+        "cpu_utilization_pct": 30.18,
+        "memory_utilization_pct": 24.06,
+        "link_utilization_pct": 34.44,
+        "latency_ms": 5.8,
+        "jitter_ms": 4.65,
+        "packet_loss_pct": 0.08,
+        "queue_drops": 2.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 99.81,
+        "dhcp_success_pct": 99.53,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SW_CAMPUS_04",
+      "device_type": "switch",
+      "metrics": {
+        "cpu_utilization_pct": 16.09,
+        "memory_utilization_pct": 39.91,
+        "link_utilization_pct": 34.68,
+        "latency_ms": 9.02,
+        "jitter_ms": 3.19,
+        "packet_loss_pct": 0.06,
+        "queue_drops": 3.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.81,
+        "dhcp_success_pct": 98.59,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SW_CAMPUS_05",
+      "device_type": "switch",
+      "metrics": {
+        "cpu_utilization_pct": 22.56,
+        "memory_utilization_pct": 32.8,
+        "link_utilization_pct": 41.97,
+        "latency_ms": 13.16,
+        "jitter_ms": 0.97,
+        "packet_loss_pct": 0.22,
+        "queue_drops": 4.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 99.62,
+        "dhcp_success_pct": 98.97,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SW_CAMPUS_06",
+      "device_type": "switch",
+      "metrics": {
+        "cpu_utilization_pct": 18.14,
+        "memory_utilization_pct": 47.78,
+        "link_utilization_pct": 42.31,
+        "latency_ms": 6.19,
+        "jitter_ms": 1.22,
+        "packet_loss_pct": 0.54,
+        "queue_drops": 1.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 100.0,
+        "dhcp_success_pct": 98.55,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_01",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 13.24,
+        "memory_utilization_pct": 41.23,
+        "link_utilization_pct": 31.57,
+        "latency_ms": 8.18,
+        "jitter_ms": 4.63,
+        "packet_loss_pct": 0.23,
+        "queue_drops": 6.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 100.0,
+        "dhcp_success_pct": 99.51,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_02",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 20.11,
+        "memory_utilization_pct": 29.44,
+        "link_utilization_pct": 26.08,
+        "latency_ms": 11.51,
+        "jitter_ms": 2.01,
+        "packet_loss_pct": 0.07,
+        "queue_drops": 1.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.2,
+        "dhcp_success_pct": 98.97,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_03",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 13.9,
+        "memory_utilization_pct": 46.26,
+        "link_utilization_pct": 12.55,
+        "latency_ms": 13.01,
+        "jitter_ms": 1.17,
+        "packet_loss_pct": 0.01,
+        "queue_drops": 3.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.51,
+        "dhcp_success_pct": 98.94,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_04",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 30.68,
+        "memory_utilization_pct": 30.94,
+        "link_utilization_pct": 33.5,
+        "latency_ms": 13.84,
+        "jitter_ms": 1.39,
+        "packet_loss_pct": 0.01,
+        "queue_drops": 0.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.61,
+        "dhcp_success_pct": 100.0,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_05",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 23.06,
+        "memory_utilization_pct": 30.49,
+        "link_utilization_pct": 13.42,
+        "latency_ms": 19.52,
+        "jitter_ms": 3.9,
+        "packet_loss_pct": 0.07,
+        "queue_drops": 5.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 100.0,
+        "dhcp_success_pct": 100.0,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_06",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 10.84,
+        "memory_utilization_pct": 21.49,
+        "link_utilization_pct": 39.8,
+        "latency_ms": 9.81,
+        "jitter_ms": 1.98,
+        "packet_loss_pct": 0.1,
+        "queue_drops": 5.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 99.02,
+        "dhcp_success_pct": 98.61,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_07",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 19.51,
+        "memory_utilization_pct": 38.25,
+        "link_utilization_pct": 18.13,
+        "latency_ms": 11.12,
+        "jitter_ms": 0.82,
+        "packet_loss_pct": 0.12,
+        "queue_drops": 1.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 98.76,
+        "dhcp_success_pct": 100.0,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "AP_CAMPUS_08",
+      "device_type": "access_point",
+      "metrics": {
+        "cpu_utilization_pct": 19.89,
+        "memory_utilization_pct": 23.4,
+        "link_utilization_pct": 24.48,
+        "latency_ms": 18.16,
+        "jitter_ms": 1.87,
+        "packet_loss_pct": 0.11,
+        "queue_drops": 4.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.19,
+        "dhcp_success_pct": 99.28,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SRV_DNS_01",
+      "device_type": "server",
+      "metrics": {
+        "cpu_utilization_pct": 35.38,
+        "memory_utilization_pct": 45.62,
+        "link_utilization_pct": 13.71,
+        "latency_ms": 14.85,
+        "jitter_ms": 2.25,
+        "packet_loss_pct": 0.01,
+        "queue_drops": 1.0,
+        "interface_errors": 1.0,
+        "dns_success_pct": 98.97,
+        "dhcp_success_pct": 99.91,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SRV_DHCP_01",
+      "device_type": "server",
+      "metrics": {
+        "cpu_utilization_pct": 43.75,
+        "memory_utilization_pct": 44.83,
+        "link_utilization_pct": 23.35,
+        "latency_ms": 9.97,
+        "jitter_ms": 0.57,
+        "packet_loss_pct": 0.04,
+        "queue_drops": 4.0,
+        "interface_errors": 0.0,
+        "dns_success_pct": 99.65,
+        "dhcp_success_pct": 98.95,
+        "reachable": true
+      }
+    },
+    {
+      "device_id": "SRV_APP_01",
+      "device_type": "server",
+      "metrics": {
+        "cpu_utilization_pct": 33.57,
+        "memory_utilization_pct": 64.5,
+        "link_utilization_pct": 29.01,
+        "latency_ms": 9.98,
+        "jitter_ms": 5.43,
+        "packet_loss_pct": 0.2,
+        "queue_drops": 7.0,
+        "interface_errors": 2.0,
+        "dns_success_pct": 99.93,
+        "dhcp_success_pct": 99.56,
+        "reachable": true
+      }
+    }
+  ],
+  "ground_truth": {
+    "scenario": "normal",
+    "root_device": null,
+    "root_link": null,
+    "affected_devices": [],
+    "severity": 0.0
+  }
+}
