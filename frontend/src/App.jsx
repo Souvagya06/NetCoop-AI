@@ -5,10 +5,8 @@ import {
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  Bell,
   Check,
   CheckCircle2,
-  ChevronDown,
   CircleHelp,
   Clock3,
   Cpu,
@@ -21,7 +19,6 @@ import {
   Map as MapIcon,
   Network,
   Radio,
-  RefreshCw,
   Router,
   Search,
   Server,
@@ -94,16 +91,6 @@ function Sidebar({ activeView, onNavigate, incidentCount }) {
         </span>
       </a>
 
-      <div className="workspace-switcher">
-        <div className="workspace-icon">IIT</div>
-        <div className="workspace-copy">
-          <strong>IIT Bhubaneswar</strong>
-          <span>Campus network</span>
-        </div>
-        <ChevronDown size={15} />
-      </div>
-
-      <p className="nav-heading">WORKSPACE</p>
       <nav className="primary-nav" aria-label="Main navigation">
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <button
@@ -120,18 +107,6 @@ function Sidebar({ activeView, onNavigate, incidentCount }) {
         ))}
       </nav>
 
-      <div className="sidebar-bottom">
-        <div className="sidebar-help">
-          <div className="help-icon"><CircleHelp size={17} /></div>
-          <div><strong>Need a hand?</strong><span>Check project docs</span></div>
-          <ArrowRight size={14} />
-        </div>
-        <div className="profile">
-          <div className="avatar">NO</div>
-          <div className="profile-copy"><strong>Network Operator</strong><span>Administrator</span></div>
-          <button className="icon-button subtle" aria-label="Profile options"><ChevronDown size={15} /></button>
-        </div>
-      </div>
     </aside>
   );
 }
@@ -910,18 +885,12 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="breadcrumb">
-            <span>Workspace</span>
-            <span className="breadcrumb-divider">/</span>
             <strong>{NAV_ITEMS.find((item) => item.id === activeView)?.label || "Overview"}</strong>
           </div>
           <div className="topbar-actions">
             <span className="live-telemetry-badge">
               <span className="live-pulse-dot" /> LIVE MONITORED {lastUpdated ? `· ${formatTime(lastUpdated)}` : ""}
             </span>
-            <div className={`connection-indicator ${apiReady ? "connected" : "disconnected"}`}>
-              <span />{apiReady ? "API connected" : "API disconnected"}
-            </div>
-            <button className="icon-button notification-button" aria-label="Notifications"><Bell size={17} /><i /></button>
             <div className="topbar-date"><span>Today</span><strong>{new Date().toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</strong></div>
           </div>
         </header>
@@ -941,9 +910,6 @@ function App() {
               >
                 <Activity size={15} style={{ color: autoRefresh ? "#14796d" : "#7c898c" }} />
                 {autoRefresh ? "Live: Polling (5s)" : "Polling Paused"}
-              </button>
-              <button className="button button-secondary refresh-button" onClick={loadDashboard} disabled={loading}>
-                <RefreshCw size={15} className={loading ? "spin" : ""} /> Refresh now
               </button>
             </div>
           </div>
