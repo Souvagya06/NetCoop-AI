@@ -39,6 +39,7 @@ const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "agents", label: "AI agents", icon: Sparkles },
   { id: "topology", label: "Network topology", icon: Network },
+  { id: "telemetry", label: "Live telemetry", icon: Activity },
   { id: "incidents", label: "Incidents", icon: FileText },
 ];
 
@@ -69,7 +70,7 @@ function confidencePercent(value) {
 }
 
 function severityClass(value = "") {
-  if (value === "critical") return "critical";
+  if (value === "critical" || value === "offline") return "critical";
   if (value === "warning") return "warning";
   return "healthy";
 }
@@ -79,7 +80,7 @@ function formatTime(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 function Sidebar({ activeView, onNavigate, incidentCount }) {
@@ -136,7 +137,7 @@ function Sidebar({ activeView, onNavigate, incidentCount }) {
 }
 
 function StatusPill({ status, label }) {
-  const Icon = status === "healthy" ? CheckCircle2 : status === "critical" ? AlertCircle : TriangleAlert;
+  const Icon = status === "healthy" ? CheckCircle2 : (status === "critical" || status === "offline") ? AlertCircle : TriangleAlert;
   return (
     <span className={`status-pill ${severityClass(status)}`}>
       <Icon size={13} />
@@ -305,12 +306,77 @@ function AgentCards({ agents, incident }) {
   );
 }
 
-function TopologyMap({ topology, incident, expanded = false }) {
+function DeviceInspector({ device, onClose }) {
+  if (!device) return null;
+  const m = device.metrics;
+  const isHealthy = m.reachable && m.cpu_utilization_pct < 80 && m.latency_ms < 80 && m.packet_loss_pct < 1;
+  const status = !m.reachable ? "offline" : isHealthy ? "healthy" : (m.cpu_utilization_pct >= 95 || m.packet_loss_pct >= 10) ? "critical" : "warning";
+
+  return (
+    <div className="device-inspector">
+      <div className="inspector-topline">
+        <div className="inspector-title">
+          <Router size={18} />
+          <div>
+            <h3>{device.device_id}</h3>
+            <span style={{ fontSize: "11px", color: "var(--muted)" }}>{pretty(device.device_type)} · Live Monitored Metrics</span>
+          </div>
+          <StatusPill status={status === "offline" ? "critical" : status} label={status === "offline" ? "Unreachable" : pretty(status)} />
+        </div>
+        <button className="icon-button subtle" onClick={onClose} aria-label="Close inspector">
+          <X size={15} />
+        </button>
+      </div>
+      <div className="inspector-metrics-grid">
+        <div className="inspector-metric-card">
+          <span>CPU UTILIZATION</span>
+          <strong style={{ color: m.cpu_utilization_pct >= 85 ? "#de5252" : "inherit" }}>{m.cpu_utilization_pct.toFixed(1)}%</strong>
+        </div>
+        <div className="inspector-metric-card">
+          <span>MEMORY UTILIZATION</span>
+          <strong>{m.memory_utilization_pct.toFixed(1)}%</strong>
+        </div>
+        <div className="inspector-metric-card">
+          <span>LATENCY</span>
+          <strong style={{ color: m.latency_ms >= 100 ? "#de5252" : "inherit" }}>{m.latency_ms.toFixed(1)} ms</strong>
+        </div>
+        <div className="inspector-metric-card">
+          <span>JITTER</span>
+          <strong>{m.jitter_ms.toFixed(1)} ms</strong>
+        </div>
+        <div className="inspector-metric-card">
+          <span>PACKET LOSS</span>
+          <strong style={{ color: m.packet_loss_pct > 1 ? "#de5252" : "inherit" }}>{m.packet_loss_pct.toFixed(2)}%</strong>
+        </div>
+        <div className="inspector-metric-card">
+          <span>LINK UTILIZATION</span>
+          <strong>{m.link_utilization_pct.toFixed(1)}%</strong>
+        </div>
+        <div className="inspector-metric-card">
+          <span>INTERFACE ERRORS</span>
+          <strong style={{ color: m.interface_errors > 0 ? "#de5252" : "inherit" }}>{m.interface_errors}</strong>
+        </div>
+        <div className="inspector-metric-card">
+          <span>QUEUE DROPS</span>
+          <strong>{m.queue_drops}</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TopologyMap({ topology, incident, expanded = false, telemetry, selectedDeviceId, onSelectDevice }) {
   const nodes = topology?.nodes || [];
   const edges = topology?.edges || [];
   const impacted = new Set(incident?.root_cause?.affected_devices || []);
   const rootDevice = incident?.root_cause?.root_device;
   const core = topology?.core;
+
+  const selectedDevice = useMemo(() => {
+    if (!selectedDeviceId || !telemetry?.devices) return null;
+    return telemetry.devices.find((d) => d.device_id === selectedDeviceId);
+  }, [selectedDeviceId, telemetry]);
+
   const positions = useMemo(() => {
     const groups = {
       router: nodes.filter((node) => node.type === "router"),
@@ -336,6 +402,7 @@ function TopologyMap({ topology, incident, expanded = false }) {
     groups.server.forEach((node, index) => map.set(node.id, { x: 820, y: 100 + index * 86 }));
     return map;
   }, [nodes, core]);
+
   const counts = useMemo(() => nodes.reduce((result, node) => {
     result[node.type] = (result[node.type] || 0) + 1;
     return result;
@@ -351,7 +418,7 @@ function TopologyMap({ topology, incident, expanded = false }) {
         <span><span className="legend-dot core-dot" /> Core</span>
         <span><span className="legend-dot device-dot" /> Network device</span>
         <span><span className="legend-dot server-dot" /> Server</span>
-        {incident && <span><span className="legend-dot impacted-dot" /> Affected</span>}
+        <span><span className="legend-dot impacted-dot" /> Degraded / Affected</span>
       </div>
       <div className="topology-canvas">
         <svg viewBox="0 0 900 410" role="img" aria-label="Campus network topology diagram">
@@ -372,14 +439,25 @@ function TopologyMap({ topology, incident, expanded = false }) {
           {nodes.map((node) => {
             const point = positions.get(node.id);
             if (!point) return null;
-            const affected = impacted.has(node.id) || node.id === rootDevice;
+            const devTelemetry = telemetry?.devices?.find((d) => d.device_id === node.id);
+            const isAffectedByIncident = impacted.has(node.id) || node.id === rootDevice;
+            const isLiveAnomalous = devTelemetry && (!devTelemetry.metrics.reachable || devTelemetry.metrics.cpu_utilization_pct >= 85 || devTelemetry.metrics.latency_ms >= 100);
+            const affected = isAffectedByIncident || isLiveAnomalous;
             const isCore = node.id === core;
             const isServer = node.type === "server";
+            const isSelected = selectedDeviceId === node.id;
+
             return (
-              <g className="topology-node" key={node.id} transform={`translate(${point.x}, ${point.y})`}>
+              <g
+                className="topology-node"
+                key={node.id}
+                transform={`translate(${point.x}, ${point.y})`}
+                onClick={() => onSelectDevice && onSelectDevice(node.id)}
+                style={{ cursor: "pointer" }}
+              >
                 <circle
                   r={isCore ? 17 : 12}
-                  className={`${isCore ? "node-core" : isServer ? "node-server" : "node-device"} ${affected ? "node-affected" : ""}`}
+                  className={`${isCore ? "node-core" : isServer ? "node-server" : "node-device"} ${affected ? "node-affected" : ""} ${isSelected ? "node-selected" : ""}`}
                 />
                 {isCore ? <Router size={15} x={-7.5} y={-7.5} /> : isServer ? <Server size={12} x={-6} y={-6} /> : node.type === "access_point" ? <Wifi size={12} x={-6} y={-6} /> : <EthernetPort size={12} x={-6} y={-6} />}
                 <text x="0" y={isCore ? -26 : -20} textAnchor="middle">{node.id.replace("RTR_CAMPUS_", "RTR-").replace("SW_CAMPUS_", "SW-").replace("AP_CAMPUS_", "AP-").replace("SRV_", "")}</text>
@@ -402,6 +480,10 @@ function TopologyMap({ topology, incident, expanded = false }) {
         <span><i className="legend-dot device-dot" />{counts.access_point || 0} access points</span>
         <span><i className="legend-dot server-dot" />{counts.server || 0} servers</span>
       </div>
+
+      {selectedDevice && (
+        <DeviceInspector device={selectedDevice} onClose={() => onSelectDevice(null)} />
+      )}
     </div>
   );
 }
@@ -491,6 +573,107 @@ function ActivityFeed({ incident }) {
   );
 }
 
+function LiveTelemetryTable({ telemetry, onSelectDevice, selectedDeviceId }) {
+  const [filterType, setFilterType] = useState("all");
+  const [search, setSearch] = useState("");
+
+  const devices = telemetry?.devices || [];
+  const filtered = useMemo(() => {
+    return devices.filter((d) => {
+      const matchesType = filterType === "all"
+        ? true
+        : filterType === "anomalies"
+        ? (!d.metrics.reachable || d.metrics.cpu_utilization_pct >= 80 || d.metrics.latency_ms >= 80 || d.metrics.packet_loss_pct >= 1.0)
+        : d.device_type === filterType;
+      const matchesSearch = d.device_id.toLowerCase().includes(search.toLowerCase());
+      return matchesType && matchesSearch;
+    });
+  }, [devices, filterType, search]);
+
+  return (
+    <div className="card incident-card telemetry-card" id="telemetry">
+      <SectionHeading
+        eyebrow="REAL-TIME TELEMETRY"
+        title="Live Monitored Devices"
+        action={
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <span className="live-telemetry-badge">
+              <span className="live-pulse-dot" /> LIVE STREAMING
+            </span>
+            <label className="search-field">
+              <Search size={15} />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search device..." />
+            </label>
+          </div>
+        }
+      />
+      <div className="telemetry-table-filters">
+        {["all", "router", "switch", "access_point", "server", "anomalies"].map((type) => (
+          <button
+            key={type}
+            className={`filter-chip ${filterType === type ? "active" : ""}`}
+            onClick={() => setFilterType(type)}
+          >
+            {type === "all" ? "All Devices (20)" : type === "anomalies" ? "Anomalies Only" : pretty(type) + "s"}
+          </button>
+        ))}
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>DEVICE ID</th>
+              <th>TYPE</th>
+              <th>STATUS</th>
+              <th>CPU UTIL</th>
+              <th>MEMORY</th>
+              <th>LATENCY</th>
+              <th>PACKET LOSS</th>
+              <th>LINK UTIL</th>
+              <th>ERRORS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((d) => {
+              const m = d.metrics;
+              const isCrit = !m.reachable || m.cpu_utilization_pct >= 95 || m.packet_loss_pct >= 10;
+              const isWarn = m.cpu_utilization_pct >= 80 || m.latency_ms >= 80 || m.packet_loss_pct >= 1;
+              const status = !m.reachable ? "offline" : isCrit ? "critical" : isWarn ? "warning" : "healthy";
+              return (
+                <tr
+                  key={d.device_id}
+                  className={`device-row-clickable ${selectedDeviceId === d.device_id ? "selected-row" : ""}`}
+                  onClick={() => onSelectDevice(d.device_id)}
+                >
+                  <td className="incident-id"><strong>{d.device_id}</strong></td>
+                  <td>{pretty(d.device_type)}</td>
+                  <td><StatusPill status={status === "offline" ? "critical" : status} label={status === "offline" ? "Unreachable" : pretty(status)} /></td>
+                  <td>
+                    <span>{m.cpu_utilization_pct.toFixed(1)}%</span>
+                    <span className="mini-gauge">
+                      <span className="mini-gauge-bar" style={{ width: `${Math.min(m.cpu_utilization_pct, 100)}%`, background: m.cpu_utilization_pct >= 85 ? "#de5252" : "#1ca386" }} />
+                    </span>
+                  </td>
+                  <td>
+                    <span>{m.memory_utilization_pct.toFixed(1)}%</span>
+                    <span className="mini-gauge">
+                      <span className="mini-gauge-bar" style={{ width: `${Math.min(m.memory_utilization_pct, 100)}%`, background: m.memory_utilization_pct >= 85 ? "#e58a2d" : "#1ca386" }} />
+                    </span>
+                  </td>
+                  <td><strong style={{ color: m.latency_ms >= 100 ? "#de5252" : "inherit" }}>{m.latency_ms.toFixed(1)} ms</strong></td>
+                  <td><span style={{ color: m.packet_loss_pct > 1 ? "#de5252" : "inherit" }}>{m.packet_loss_pct.toFixed(2)}%</span></td>
+                  <td>{m.link_utilization_pct.toFixed(1)}%</td>
+                  <td>{m.interface_errors > 0 ? <strong style={{ color: "#de5252" }}>{m.interface_errors}</strong> : "0"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function IncidentTable({ incidents, onSelect, selectedId, search, setSearch }) {
   const filtered = incidents.filter((incident) =>
     `${incident.incident_id} ${incident.root_cause} ${incident.root_device || ""}`.toLowerCase().includes(search.toLowerCase()),
@@ -546,6 +729,9 @@ function App() {
   const [error, setError] = useState("");
   const [agents, setAgents] = useState([]);
   const [topology, setTopology] = useState(null);
+  const [liveTelemetry, setLiveTelemetry] = useState(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [scenarios, setScenarios] = useState(FALLBACK_SCENARIOS);
   const [incidents, setIncidents] = useState([]);
   const [incident, setIncident] = useState(null);
@@ -553,6 +739,7 @@ function App() {
   const [seed, setSeed] = useState("42");
   const [running, setRunning] = useState(false);
   const [search, setSearch] = useState("");
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -563,8 +750,9 @@ function App() {
       api.topology(),
       api.agents(),
       api.history(),
+      api.liveTelemetry(),
     ]);
-    const [healthResult, scenarioResult, topologyResult, agentResult, historyResult] = results;
+    const [healthResult, scenarioResult, topologyResult, agentResult, historyResult, telemetryResult] = results;
     const loadErrors = [];
 
     if (healthResult.status === "fulfilled") {
@@ -576,7 +764,7 @@ function App() {
     if (healthResult.status === "fulfilled") {
       const failures = results.slice(1).flatMap((result, index) =>
         result.status === "rejected"
-          ? [`${["scenarios", "topology", "agents", "incident history"][index]}: ${result.reason.message}`]
+          ? [`${["scenarios", "topology", "agents", "incident history", "live telemetry"][index]}: ${result.reason.message}`]
           : [],
       );
       loadErrors.push(...failures);
@@ -586,6 +774,10 @@ function App() {
     }
     if (topologyResult.status === "fulfilled") setTopology(topologyResult.value);
     if (agentResult.status === "fulfilled") setAgents(agentResult.value.agents || []);
+    if (telemetryResult.status === "fulfilled") {
+      setLiveTelemetry(telemetryResult.value);
+      setLastUpdated(new Date());
+    }
     if (historyResult.status === "fulfilled") {
       const history = historyResult.value.incidents || [];
       setIncidents(history);
@@ -607,14 +799,49 @@ function App() {
     loadDashboard();
   }, [loadDashboard]);
 
+  // Live polling interval every 5 seconds
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(async () => {
+      try {
+        const [tel, hist] = await Promise.allSettled([
+          api.liveTelemetry(),
+          api.history(),
+        ]);
+        if (tel.status === "fulfilled") {
+          setLiveTelemetry(tel.value);
+          setLastUpdated(new Date());
+        }
+        if (hist.status === "fulfilled" && hist.value.incidents) {
+          setIncidents(hist.value.incidents);
+        }
+      } catch {
+        // silent polling catch
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
   const handleRun = async () => {
     setRunning(true);
     setError("");
     try {
       const result = await api.simulate(scenario, seed === "" ? null : Number(seed));
       setIncident(result);
-      const historyResult = await api.history();
-      setIncidents(historyResult.incidents || []);
+      const [historyResult, telResult] = await Promise.allSettled([
+        api.history(),
+        api.liveTelemetry(),
+      ]);
+      if (historyResult.status === "fulfilled") {
+        setIncidents(historyResult.value.incidents || []);
+      }
+      if (telResult.status === "fulfilled") {
+        setLiveTelemetry(telResult.value);
+        setLastUpdated(new Date());
+      }
+      if (result?.root_cause?.root_device) {
+        setSelectedDeviceId(result.root_cause.root_device);
+      }
       setActiveView("overview");
     } catch (requestError) {
       setError(requestError.message);
@@ -628,6 +855,9 @@ function App() {
     try {
       const result = await api.incident(id);
       setIncident(result);
+      if (result?.root_cause?.root_device) {
+        setSelectedDeviceId(result.root_cause.root_device);
+      }
       setActiveView("overview");
     } catch (requestError) {
       setError(requestError.message);
@@ -665,8 +895,15 @@ function App() {
       <Sidebar activeView={activeView} onNavigate={navigate} incidentCount={incidents.length} />
       <main className="main-content">
         <header className="topbar">
-          <div className="breadcrumb"><span>Workspace</span><span className="breadcrumb-divider">/</span><strong>{NAV_ITEMS.find((item) => item.id === activeView)?.label || "Overview"}</strong></div>
+          <div className="breadcrumb">
+            <span>Workspace</span>
+            <span className="breadcrumb-divider">/</span>
+            <strong>{NAV_ITEMS.find((item) => item.id === activeView)?.label || "Overview"}</strong>
+          </div>
           <div className="topbar-actions">
+            <span className="live-telemetry-badge">
+              <span className="live-pulse-dot" /> LIVE MONITORED {lastUpdated ? `· ${formatTime(lastUpdated)}` : ""}
+            </span>
             <div className={`connection-indicator ${apiReady ? "connected" : "disconnected"}`}>
               <span />{apiReady ? "API connected" : "API disconnected"}
             </div>
@@ -680,11 +917,21 @@ function App() {
             <div>
               <div className="welcome-line"><span className="welcome-dot" /> CAMPUS NETWORK OPERATIONS</div>
               <h1>Network overview</h1>
-              <p>See what’s happening across your campus network, all in one place.</p>
+              <p>Real-time campus network operations, multi-agent fault diagnosis & live telemetry.</p>
             </div>
-            <button className="button button-secondary refresh-button" onClick={loadDashboard} disabled={loading}>
-              <RefreshCw size={15} className={loading ? "spin" : ""} /> Refresh data
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                className={`button button-secondary`}
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                title={autoRefresh ? "Pause 5s auto-polling" : "Resume 5s auto-polling"}
+              >
+                <Activity size={15} style={{ color: autoRefresh ? "#14796d" : "#7c898c" }} />
+                {autoRefresh ? "Live: Polling (5s)" : "Polling Paused"}
+              </button>
+              <button className="button button-secondary refresh-button" onClick={loadDashboard} disabled={loading}>
+                <RefreshCw size={15} className={loading ? "spin" : ""} /> Refresh now
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -713,30 +960,30 @@ function App() {
             <StatCard
               icon={Network}
               label="Devices monitored"
-              value={topology ? topology.nodes?.length ?? "—" : "—"}
-              footnote={topology ? "Across campus topology" : "Waiting for topology"}
+              value={liveTelemetry ? `${liveTelemetry.online_count ?? topology?.nodes?.length ?? 20} / ${liveTelemetry.device_count ?? topology?.nodes?.length ?? 20}` : (topology ? topology.nodes?.length ?? "—" : "—")}
+              footnote={liveTelemetry ? `${liveTelemetry.healthy_count ?? 0} optimal · ${liveTelemetry.warning_count ?? 0} warning` : "Across campus topology"}
               tone="teal"
             />
             <StatCard
-              icon={Sparkles}
-              label="AI agents"
-              value={agents.length || "—"}
-              footnote="Collaborating on each diagnosis"
-              tone="violet"
+              icon={Activity}
+              label="Campus Avg Latency"
+              value={liveTelemetry?.averages ? `${liveTelemetry.averages.avg_latency_ms} ms` : "—"}
+              footnote={liveTelemetry?.averages ? `Packet loss: ${liveTelemetry.averages.avg_packet_loss_pct}%` : "Live monitored"}
+              tone="blue"
+            />
+            <StatCard
+              icon={Cpu}
+              label="Campus Avg CPU"
+              value={liveTelemetry?.averages ? `${liveTelemetry.averages.avg_cpu_pct}%` : "—"}
+              footnote={liveTelemetry?.averages ? `Avg RAM: ${liveTelemetry.averages.avg_memory_pct}%` : "Across all nodes"}
+              tone={liveTelemetry?.averages?.avg_cpu_pct >= 80 ? "rose" : "violet"}
             />
             <StatCard
               icon={TriangleAlert}
-              label="Open incidents"
-              value={statusSummary.critical + statusSummary.warning}
-              footnote={statusSummary.critical ? `${statusSummary.critical} critical · ${statusSummary.warning} warning` : "From current session history"}
-              tone="amber"
-            />
-            <StatCard
-              icon={Activity}
-              label="Latest status"
-              value={incident ? pretty(incident.root_cause?.severity || "healthy") : "No runs yet"}
-              footnote={incident ? incident.root_cause?.label : "Run a diagnosis to get started"}
-              tone={incident?.root_cause?.severity === "critical" ? "rose" : "blue"}
+              label="Network Status"
+              value={incident ? pretty(incident.root_cause?.severity || "healthy") : (liveTelemetry?.critical_count > 0 ? "Critical" : liveTelemetry?.warning_count > 0 ? "Warning" : "Optimal")}
+              footnote={incident ? incident.root_cause?.label : (liveTelemetry ? `${liveTelemetry.healthy_count} of ${liveTelemetry.device_count} nodes optimal` : "Monitoring live")}
+              tone={incident?.root_cause?.severity === "critical" || liveTelemetry?.critical_count > 0 ? "rose" : "teal"}
             />
           </section>
 
@@ -766,9 +1013,20 @@ function App() {
               <SectionHeading
                 eyebrow="CAMPUS INFRASTRUCTURE"
                 title="Network topology"
-                action={<button className="icon-button card-action" aria-label="View topology" onClick={() => navigate("topology")}><ArrowRight size={16} /></button>}
+                action={
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <span style={{ fontSize: "11px", color: "var(--muted)" }}>Click node to inspect live metrics</span>
+                    <button className="icon-button card-action" aria-label="View topology" onClick={() => navigate("topology")}><ArrowRight size={16} /></button>
+                  </div>
+                }
               />
-              <TopologyMap topology={topology} incident={incident} />
+              <TopologyMap
+                topology={topology}
+                incident={incident}
+                telemetry={liveTelemetry}
+                selectedDeviceId={selectedDeviceId}
+                onSelectDevice={setSelectedDeviceId}
+              />
             </section>
 
             <section className="card evidence-card">
@@ -776,6 +1034,17 @@ function App() {
               <EvidencePanel incident={incident} />
             </section>
           </div>
+
+          <section className="page-section" id="telemetry">
+            <LiveTelemetryTable
+              telemetry={liveTelemetry}
+              onSelectDevice={(id) => {
+                setSelectedDeviceId(id);
+                document.getElementById("topology")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              selectedDeviceId={selectedDeviceId}
+            />
+          </section>
 
           <section className="page-section" id="incidents">
             <IncidentTable
@@ -789,7 +1058,7 @@ function App() {
 
           <footer className="page-footer">
             <span><ShieldCheck size={14} /> Recommendations are advisory and require administrator verification.</span>
-            <span>Telemetry is synthetic · NetCoop AI</span>
+            <span>Live monitored telemetry · NetCoop AI</span>
           </footer>
         </div>
       </main>

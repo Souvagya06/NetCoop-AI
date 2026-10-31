@@ -85,3 +85,8 @@ def test_simulation_requests_reject_unknown_fields_and_non_integer_seeds():
     assert fractional_seed.status_code == 422
     assert extra_field.json()["code"] == "request_validation_error"
     assert fractional_seed.json()["code"] == "request_validation_error"
+
+
+def test_root_serves_frontend():
+    response = client.get("/")
+    assert response.status_code == 200
