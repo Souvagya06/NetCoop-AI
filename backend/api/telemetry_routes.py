@@ -1,17 +1,25 @@
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from data_generator.scenarios import SCENARIOS
-from services import dataset_service
+from services import dataset_service, diagnosis_service
 
 router = APIRouter(prefix="/telemetry", tags=["telemetry"])
 
 
 class SimulateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     scenario: str = "normal"
-    seed: Optional[int] = None
+    seed: Optional[int] = Field(default=None, ge=0, strict=True)
+
+
+@router.get("/live")
+def live_telemetry():
+    """Returns real-time monitored network telemetry across all devices."""
+    return diagnosis_service.get_current_telemetry()
 
 
 @router.post("/generate")

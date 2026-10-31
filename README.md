@@ -251,7 +251,14 @@ NetCoop-AI/
 
 ## Design Principles & Honesty Controls
 
-- **Zero Information Leakage**: Ground truth metadata is stripped (`snapshot.without_ground_truth()`) before analysis agents receive telemetry.
-- **Fail-Safe Orchestration**: If an agent experiences a crash or timeout ($10\text{s}$), it is recorded as a protocol limitation; the diagnosis proceeds without blocking.
-- **Explainable by Design**: Evidence scores represent heuristic confidence rankings, not ungrounded black-box probabilities.
-- **Advisory Remediation**: All recommended actions are intended for human network administrators to review and verify before execution.
+The local API allows the frontend origins `localhost` and `127.0.0.1` on ports
+3000 and 5173. Set `CORS_ORIGINS` in `.env` to a comma-separated list of exact
+origins when the frontend runs elsewhere. Request validation errors return a
+422 response with a string `detail`, a machine-readable `code`, and sanitized
+field errors (submitted values are not echoed).
+
+## Honest limitations
+- Evidence scores are heuristic rankings, not calibrated probabilities.
+- Thresholds/rules are hand-chosen; mild faults can fall below them and be reported as "normal".
+- Diagnosis uses one snapshot (no time series). Incident history is in-memory.
+- Synthetic data comes from our own assumptions; accuracy on real networks would differ.
