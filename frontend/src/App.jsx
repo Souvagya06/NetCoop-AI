@@ -576,6 +576,7 @@ function ActivityFeed({ incident }) {
 function LiveTelemetryTable({ telemetry, onSelectDevice, selectedDeviceId }) {
   const [filterType, setFilterType] = useState("all");
   const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
   const devices = telemetry?.devices || [];
   const filtered = useMemo(() => {
@@ -589,6 +590,7 @@ function LiveTelemetryTable({ telemetry, onSelectDevice, selectedDeviceId }) {
       return matchesType && matchesSearch;
     });
   }, [devices, filterType, search]);
+  const visibleDevices = showAll ? filtered : filtered.slice(0, 5);
 
   return (
     <div className="card incident-card telemetry-card" id="telemetry">
@@ -634,7 +636,7 @@ function LiveTelemetryTable({ telemetry, onSelectDevice, selectedDeviceId }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((d) => {
+            {visibleDevices.map((d) => {
               const m = d.metrics;
               const isCrit = !m.reachable || m.cpu_utilization_pct >= 95 || m.packet_loss_pct >= 10;
               const isWarn = m.cpu_utilization_pct >= 80 || m.latency_ms >= 80 || m.packet_loss_pct >= 1;
@@ -670,6 +672,18 @@ function LiveTelemetryTable({ telemetry, onSelectDevice, selectedDeviceId }) {
           </tbody>
         </table>
       </div>
+      {filtered.length > 5 && (
+        <div className="telemetry-show-more-wrap">
+          <button
+            className="button button-secondary telemetry-show-more"
+            type="button"
+            aria-expanded={showAll}
+            onClick={() => setShowAll((current) => !current)}
+          >
+            {showAll ? "Show less" : "Show more"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

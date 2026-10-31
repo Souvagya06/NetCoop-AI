@@ -1030,6 +1030,8 @@ td { font-size: 14px; }
   }
   .agent-card h3, .inspector-title h3 { font-size: 16px; }
 }
+.telemetry-show-more-wrap { display: flex; justify-content: center; padding: 18px 0 8px; }
+.telemetry-show-more { min-width: 150px; }
 
 /* Second readability step */
 .breadcrumb, .topbar-date span, .topbar-date strong, .connection-indicator { font-size: 13px; }
