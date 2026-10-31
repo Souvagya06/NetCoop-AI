@@ -1,8 +1,12 @@
 .env
-.env.*
-!.env.example
 __pycache__/
 *.pyc
-venv/
+.pytest_cache/
 .venv/
+venv/
 node_modules/
+.DS_Store
+# generated artefacts (recreate with scripts/generate_dataset.py)
+backend/datasets/generated/*.csv
+backend/datasets/generated/*.json
+backend/ml_models/saved/*.joblib
