@@ -4,7 +4,7 @@ from typing import List
 
 from agents.reporting_agent import recommendation_engine as rec
 from agents.reporting_agent import report_generator as gen
-from protocols.message_schema import AgentMessage, MessageType, Status
+from protocols.message_schema import AgentMessage, Finding, MessageType, Status
 from protocols.telemetry_schema import TelemetrySnapshot
 
 KEY_METRICS = [("cpu_utilization_pct", "CPU utilisation (%)"), ("memory_utilization_pct", "Memory utilisation (%)"), ("link_utilization_pct", "Link utilisation (%)"),
@@ -73,5 +73,23 @@ class ReportingAgent:
                 report["ai_summary"], report["generated_by"] = text, "rules+gemini"
         report["markdown"] = gen.to_markdown(report)
 
-        return AgentMessage(incident_id=incident_id, sender=self.name, message_type=MessageType.REPORT, status=diagnosis.status,
-                            evidence={"report": report}, confidence=diagnosis.confidence, limitations=diagnosis.limitations)
+        findings = [
+            Finding(
+                code="recommended_action",
+                description=action,
+                severity=diagnosis.status,
+                devices=[root] if root else [],
+                confidence=diagnosis.confidence,
+            )
+            for action in report["recommended_actions"]
+        ]
+        return AgentMessage(
+            incident_id=incident_id,
+            sender=self.name,
+            message_type=MessageType.REPORT,
+            status=diagnosis.status,
+            findings=findings,
+            evidence={"report": report},
+            confidence=diagnosis.confidence,
+            limitations=diagnosis.limitations,
+        )

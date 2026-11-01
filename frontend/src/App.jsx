@@ -7,6 +7,8 @@ import {
   ArrowUpRight,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   CircleHelp,
   Clock3,
   Cpu,
@@ -249,35 +251,259 @@ function CauseCard({ incident, onExport }) {
   );
 }
 
-function AgentCards({ agents, incident }) {
-  const messages = incident?.agent_messages || [];
+function AgentFindingsModal({ agentData, incident, onClose }) {
+  if (!agentData) return null;
+  const { agent, message, index } = agentData;
+  const status = message?.status || "healthy";
+  const findings = message?.findings || [];
+  const limitations = message?.limitations || [];
+  const Icon = AGENT_ICONS[index % AGENT_ICONS.length];
+  const hasFindings = findings.length > 0;
+  const isCorrelation = agent.name === "correlation_agent";
+  const isReporting = agent.name === "reporting_agent";
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Specific labels based on agent responsibility
+  const sectionTitle = isCorrelation
+    ? "Ranked Candidate Root Causes & Hypotheses"
+    : isReporting
+    ? "Recommended Remediation Actions & Advisory Steps"
+    : "Detected Errors & Metric Anomalies";
+
+  const countBadgeLabel = isCorrelation ? "hypotheses" : isReporting ? "actions" : "findings";
+
   return (
-    <div className="agent-grid">
-      {agents.map((agent, index) => {
-        const message = messages.find((entry) => entry.sender === agent.name);
-        const status = message?.status || "healthy";
-        const Icon = AGENT_ICONS[index % AGENT_ICONS.length];
-        const findings = message?.findings || [];
-        return (
-          <article className="agent-card" key={agent.name}>
-            <div className="agent-card-top">
-              <span className={`agent-icon agent-${index % AGENT_ICONS.length}`}><Icon size={17} /></span>
-              <span className={`agent-status-dot ${message ? severityClass(status) : "idle"}`} />
-            </div>
-            <p className="agent-role">{pretty(agent.role)}</p>
-            <h3>{pretty(agent.name)}</h3>
-            <p className="agent-description">{agent.description}</p>
-            <div className="agent-card-bottom">
-              <span className={`agent-state ${message ? severityClass(status) : "idle"}`}>
-                {message ? (status === "healthy" ? "Analysis complete" : pretty(status)) : "Awaiting run"}
+    <div className="agent-modal-backdrop" onClick={onClose}>
+      <div className="agent-modal-window" onClick={(e) => e.stopPropagation()}>
+        <div className="agent-modal-header">
+          <div className="agent-modal-header-left">
+            <span className={`agent-icon agent-${index % AGENT_ICONS.length}`}>
+              <Icon size={19} />
+            </span>
+            <div>
+              <div className="agent-modal-title-row">
+                <h3>{pretty(agent.name)}</h3>
+                <span className={`dropdown-status-badge ${severityClass(status)}`}>
+                  {pretty(status)}
+                </span>
+              </div>
+              <span className="agent-modal-role">
+                {pretty(agent.role)} · {isCorrelation ? "Evidence Correlation & Ranking" : isReporting ? "Action Recommendations & Reporting" : "Telemetry Diagnostics"}
               </span>
-              <span>{findings.length} finding{findings.length === 1 ? "" : "s"}</span>
             </div>
-          </article>
-        );
-      })}
-      {agents.length === 0 && <div className="inline-empty">Agent registry will appear when the API is available.</div>}
+          </div>
+          <button className="icon-button subtle" onClick={onClose} aria-label="Close dialog">
+            <X size={17} />
+          </button>
+        </div>
+
+        <div className="agent-modal-summary-bar">
+          <div className="modal-summary-item">
+            <span>{isCorrelation ? "EVALUATED HYPOTHESES" : isReporting ? "ADVISORY ACTIONS" : "TOTAL FINDINGS"}</span>
+            <strong style={{ color: hasFindings && status !== "healthy" ? "#d93829" : "inherit" }}>
+              {findings.length}
+            </strong>
+          </div>
+          <div className="modal-summary-item">
+            <span>AGENT STATUS</span>
+            <strong style={{ color: status === "critical" ? "#d93829" : status === "warning" ? "#d97706" : "#12745d" }}>
+              {message ? (status === "healthy" ? "Complete" : pretty(status)) : "Awaiting Run"}
+            </strong>
+          </div>
+          <div className="modal-summary-item">
+            <span>CONFIDENCE</span>
+            <strong>{message?.confidence != null ? `${Math.round(message.confidence * 100)}%` : "—"}</strong>
+          </div>
+        </div>
+
+        <div className="agent-modal-body">
+          <h4 className="agent-modal-section-title">
+            <span>{sectionTitle}</span>
+            <span className={`dropdown-count-pill ${hasFindings ? severityClass(status) : ""}`}>
+              {findings.length} {countBadgeLabel}
+            </span>
+          </h4>
+
+          {hasFindings ? (
+            <div className="modal-findings-list">
+              {findings.map((f, i) => (
+                <div className={`modal-finding-card ${severityClass(f.severity || "warning")}`} key={i}>
+                  <div className="modal-finding-top">
+                    <div className="modal-finding-heading">
+                      <strong className="modal-finding-title">{pretty(f.code || f.description)}</strong>
+                      <span className={`finding-badge ${severityClass(f.severity || "warning")}`}>
+                        {f.severity || "warning"}
+                      </span>
+                    </div>
+                    {f.confidence != null && (
+                      <span className="modal-finding-conf">
+                        Evidence: <strong>{Math.round(f.confidence * 100)}%</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  {f.description && (
+                    <p className="modal-finding-desc">{f.description}</p>
+                  )}
+
+                  <div className="modal-finding-footer">
+                    {f.devices && f.devices.length > 0 ? (
+                      <div className="modal-finding-devices">
+                        <span>Affected Device(s):</span>
+                        {f.devices.map((d) => (
+                          <code key={d} className="device-chip">{d}</code>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="modal-finding-scope">
+                        {isReporting ? "Action Scope: Network Operations & Device Config" : "Scope: Campus-wide / Global"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="modal-empty-state">
+              <CheckCircle2 size={24} color="#1cb57b" />
+              <div>
+                <strong>No Active Anomalies Flagged</strong>
+                <p>
+                  {message
+                    ? "This agent analyzed the current network telemetry snapshot and found all metrics within normal operational thresholds."
+                    : "Awaiting simulation run. Run a diagnosis scenario from the top controls to inspect live findings."}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isReporting && incident?.report?.summary && (
+            <div className="modal-summary-narrative">
+              <strong>Executive Summary:</strong>
+              <p>{incident.report.summary}</p>
+            </div>
+          )}
+
+          {limitations.length > 0 && (
+            <div className="modal-limitations-box">
+              <strong>Agent Notes & Telemetry Constraints:</strong>
+              <ul>
+                {limitations.map((lim, idx) => (
+                  <li key={idx}>{lim}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="agent-modal-footer">
+          <span className="modal-footer-hint">Press Esc or click outside to dismiss</span>
+          <button className="button button-primary" onClick={onClose}>
+            Done
+          </button>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function AgentCards({ agents, incident }) {
+  const [activeModalAgent, setActiveModalAgent] = useState(null);
+  const messages = incident?.agent_messages || [];
+
+  return (
+    <>
+      <div className="agent-grid">
+        {agents.map((agent, index) => {
+          // Robust fallback: find in agent_messages or fallback to correlation / report
+          let message = messages.find((entry) => entry.sender === agent.name);
+          if (!message && agent.name === "correlation_agent" && incident?.correlation) {
+            message = incident.correlation;
+          }
+          if (!message && agent.name === "reporting_agent" && incident?.report) {
+            const report = incident.report;
+            message = {
+              incident_id: incident.incident_id,
+              sender: "reporting_agent",
+              status: report.severity || "healthy",
+              confidence: report.confidence || 0.9,
+              findings: (report.recommended_actions || []).map((action) => ({
+                code: "recommended_action",
+                description: action,
+                severity: report.severity || "healthy",
+                devices: report.root_device ? [report.root_device] : [],
+                confidence: report.confidence || 0.9,
+              })),
+              limitations: report.limitations || [],
+            };
+          }
+
+          const status = message?.status || "healthy";
+          const Icon = AGENT_ICONS[index % AGENT_ICONS.length];
+          const findings = message?.findings || [];
+          const hasFindings = findings.length > 0;
+          const isCorrelation = agent.name === "correlation_agent";
+          const isReporting = agent.name === "reporting_agent";
+
+          let stateLabel = "Awaiting run";
+          if (message) {
+            if (status === "healthy") {
+              stateLabel = isCorrelation ? "Diagnosis complete" : isReporting ? "Report generated" : "Analysis complete";
+            } else {
+              stateLabel = pretty(status);
+            }
+          }
+
+          const findingCountLabel = isCorrelation
+            ? `${findings.length} hypothes${findings.length === 1 ? "is" : "es"}`
+            : isReporting
+            ? `${findings.length} action${findings.length === 1 ? "" : "s"}`
+            : `${findings.length} finding${findings.length === 1 ? "" : "s"}`;
+
+          return (
+            <article className="agent-card" key={agent.name}>
+              <div className="agent-card-top">
+                <span className={`agent-icon agent-${index % AGENT_ICONS.length}`}><Icon size={17} /></span>
+                <span className={`agent-status-dot ${message ? severityClass(status) : "idle"}`} />
+              </div>
+              <p className="agent-role">{pretty(agent.role)}</p>
+              <h3>{pretty(agent.name)}</h3>
+              <p className="agent-description">{agent.description}</p>
+              
+              <div className="agent-card-bottom">
+                <span className={`agent-state ${message ? severityClass(status) : "idle"}`}>
+                  {stateLabel}
+                </span>
+                <button
+                  type="button"
+                  className={`agent-findings-trigger ${hasFindings ? "has-findings" : ""}`}
+                  onClick={() => setActiveModalAgent({ agent, message, index })}
+                  title={hasFindings ? `Click to inspect ${findingCountLabel} in window` : "View agent diagnostics"}
+                >
+                  <span>{findingCountLabel}</span>
+                  <ArrowUpRight size={13} />
+                </button>
+              </div>
+            </article>
+          );
+        })}
+        {agents.length === 0 && <div className="inline-empty">Agent registry will appear when the API is available.</div>}
+      </div>
+
+      <AgentFindingsModal
+        agentData={activeModalAgent}
+        incident={incident}
+        onClose={() => setActiveModalAgent(null)}
+      />
+    </>
   );
 }
 

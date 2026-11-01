@@ -8,6 +8,7 @@ import config
 from orchestrator.orchestrator import Orchestrator
 from protocols.telemetry_schema import TelemetrySnapshot
 from services import dataset_service
+from services.telemetry_buffer import get_buffer
 
 _orchestrator: Optional[Orchestrator] = None
 _history: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
@@ -26,6 +27,8 @@ def diagnose(snapshot: TelemetrySnapshot) -> Dict[str, Any]:
     global _current_snapshot
     with _lock:
         _current_snapshot = snapshot
+    # Push into rolling buffer so agents/API can use trend data
+    get_buffer().push(snapshot)
     result = get_orchestrator().diagnose(snapshot)
     with _lock:
         _history[result["incident_id"]] = result
@@ -115,6 +118,9 @@ def get_current_telemetry() -> Dict[str, Any]:
             "avg_link_util_pct": round(sum(d.metrics.link_utilization_pct for d in snap.devices) / n, 1),
         },
         "devices": devices,
+        # Rolling-window trends: populated after the first diagnosis run.
+        # cpu_utilization_pct_trend > 0 means CPU rising across recent snapshots.
+        "trends": get_buffer().summaries(),
     }
 
 

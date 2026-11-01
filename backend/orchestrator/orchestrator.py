@@ -114,7 +114,7 @@ class Orchestrator:
                 "incident_declared": ev["incident_declared"], "root_device": ev.get("root_device"), "root_link": ev.get("root_link"),
                 "affected_devices": ev.get("affected_devices", []), "severity": diagnosis.status.value,
             },
-            "agent_messages": [m.model_dump(mode="json") for m in messages],
+            "agent_messages": [m.model_dump(mode="json") for m in (list(messages) + [diagnosis, report_msg])],
             "correlation": diagnosis.model_dump(mode="json"),
             "report": report,
             "timeline": timeline,
