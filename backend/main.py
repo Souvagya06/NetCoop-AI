@@ -1,3 +1,4 @@
+import os
 """NetCoop AI backend entry point.
 
 Run from the backend/ folder:   uvicorn main:app --reload
@@ -112,4 +113,5 @@ if __name__ == "__main__":
     print("  - API Docs:      http://127.0.0.1:8000/docs")
     print("  - Health Check:  http://127.0.0.1:8000/api/health")
     print("=" * 60 + "\n")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
